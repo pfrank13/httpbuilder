@@ -272,8 +272,27 @@ class GAEClientConnection
     unmarkReusable();
     shutdown();
   }
+  
 
-  private ClientConnectionManager connManager;
+  //
+  // The methods below were added because of interfaces changes.  They are stubbed and should be implemented
+  //
+
+  public void bind(Socket socket) throws IOException {
+	throw new IOException("Not Implemented");
+  }
+
+  public String getId() {
+	  return null;
+  }
+
+  public Socket getSocket() {
+	return null;
+  }
+
+
+
+private ClientConnectionManager connManager;
   private HttpRoute route;
   private Object state;
   private boolean reusable;
