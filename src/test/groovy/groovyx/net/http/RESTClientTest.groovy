@@ -15,6 +15,7 @@ import static groovyx.net.http.ContentType.*
 public class RESTClientTest {
 
     def twitter = null
+	def twitterServer = null
     static postID = null
     def userID = System.getProperty('twitter.user')
 
@@ -26,6 +27,8 @@ public class RESTClientTest {
                 System.getProperty('twitter.oauth.secretToken')
         twitter.contentType = ContentType.JSON
         HttpConnectionParams.setSoTimeout twitter.client.params, 15000
+		
+		twitterServer = System.getProperty("twitter.server")
     }
 
     @Test public void testConstructors() {
@@ -55,7 +58,7 @@ public class RESTClientTest {
            the parser knows how it should _attempt_ to parse the response.  */
         def resp = twitter.get( path : 'home_timeline.json' )
         assert resp.status == 200
-        assert resp.headers.Server == "tfe"
+        assert resp.headers.Server == twitterServer
         assert resp.headers.Server == resp.headers['Server'].value
         assert resp.contentType == JSON.toString()
         assert ( resp.data instanceof List )
@@ -84,7 +87,7 @@ public class RESTClientTest {
         // delete the test message.
         if ( ! postID ) throw new IllegalStateException( "No post ID from testPost()" )
         println "Deleting post ID : $postID"
-        def resp = twitter.delete( path : "destroy/${postID}.json" )
+        def resp = twitter.post( path : "destroy/${postID}.json" )
         assert resp.status == 200
         assert resp.data.id == postID
         println "Test tweet ID ${resp.data.id} was deleted."

@@ -109,7 +109,7 @@ public class AsyncHTTPBuilderTest {
         assert postID
 
         // delete the test message.
-        resp = http.request( DELETE, JSON ) { req ->
+        resp = http.request( POST, JSON ) { req ->
             uri.path = "destroy/${postID}.json"
 
             response.success = { resp2, json ->
