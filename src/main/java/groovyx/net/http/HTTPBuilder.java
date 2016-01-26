@@ -51,12 +51,15 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.AuthCache;
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.protocol.ClientContext;
+import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.conn.params.ConnRoutePNames;
 import org.apache.http.conn.scheme.Scheme;
@@ -512,7 +515,21 @@ public class HTTPBuilder {
             }
         };
 
-        return getClient().execute(reqMethod, responseHandler, delegate.getContext());
+        final HttpContextDecorator httpContextDecorator = delegate.getContext();
+        final HttpClientContext httpClientContext = httpContextDecorator.getDelegate();
+        if(delegate.getUsePreemptiveAuthentication()){
+            final AuthCache authCache = auth.getAuthCache();
+            if(client instanceof AbstractHttpClient){
+                final AbstractHttpClient abstractHttpClient = (AbstractHttpClient)client;
+                final CredentialsProvider credentialsProvider = abstractHttpClient.getCredentialsProvider();
+                httpClientContext.setCredentialsProvider(credentialsProvider);
+                httpClientContext.setAuthCache(authCache);
+            }else{
+                throw new IllegalStateException("client is not an AbstractHttpClient");
+            }
+        }
+
+        return getClient().execute(reqMethod, responseHandler, httpContextDecorator);
     }
 
     /**
@@ -977,6 +994,7 @@ public class HTTPBuilder {
         private Map<Object,Object> headers = new StringHashMap<Object>();
         private HttpContextDecorator context = new HttpContextDecorator();
         private Object body;
+        private boolean usePreemptiveAuthentication;
 
         public RequestConfigDelegate( HttpRequestBase request, Object contentType,
                 Map<?,?> defaultRequestHeaders,
@@ -1164,6 +1182,8 @@ public class HTTPBuilder {
 
             Object body = args.remove("body");
             if ( body != null ) this.setBody( body );
+            final Boolean usePreemptiveAuthentication = (Boolean) args.remove("usePreemptiveAuthentication");
+            this.usePreemptiveAuthentication = usePreemptiveAuthentication == null ? false : usePreemptiveAuthentication;
 
             if ( args.size() > 0 ) {
                 String invalidArgs = "";
@@ -1314,5 +1334,9 @@ public class HTTPBuilder {
          * @param ctx
          */
         public void setContext( HttpContext ctx ) { this.context = new HttpContextDecorator(ctx); }
+
+        public boolean getUsePreemptiveAuthentication() {
+            return usePreemptiveAuthentication;
+        }
     }
 }

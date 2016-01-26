@@ -44,10 +44,13 @@ import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.NTCredentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.AuthCache;
 import org.apache.http.client.HttpClient;
 import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.ssl.SSLSocketFactory;
+import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.AbstractHttpClient;
+import org.apache.http.impl.client.BasicAuthCache;
 import org.apache.http.protocol.ExecutionContext;
 import org.apache.http.protocol.HttpContext;
 
@@ -59,6 +62,8 @@ import org.apache.http.protocol.HttpContext;
  */
 public class AuthConfig {
     protected HTTPBuilder builder;
+    private AuthCache authCache = new BasicAuthCache();
+
     public AuthConfig( HTTPBuilder builder ) {
         this.builder = builder;
     }
@@ -74,7 +79,7 @@ public class AuthConfig {
     public void basic( String user, String pass ) {
         URI uri = ((URIBuilder)builder.getUri()).toURI();
         if ( uri == null ) throw new IllegalStateException( "a default URI must be set" );
-        this.basic( uri.getHost(), uri.getPort(), user, pass );
+        this.basic( uri.getHost(), uri.getPort(), user, pass, uri.getScheme());
     }
 
     /**
@@ -84,7 +89,7 @@ public class AuthConfig {
      * @param user
      * @param pass
      */
-    public void basic( String host, int port, String user, String pass ) {
+    public void basic( String host, int port, String user, String pass, final String scheme) {
 	  final HttpClient client = builder.getClient();
 	  if ( !(client instanceof AbstractHttpClient )) {
 		throw new IllegalStateException("client is not an AbstractHttpClient");
@@ -93,6 +98,8 @@ public class AuthConfig {
             new AuthScope( host, port ),
             new UsernamePasswordCredentials( user, pass )
         );
+        final HttpHost httpHost = new HttpHost(host, port, scheme);
+        authCache.put(httpHost, new BasicScheme());
     }
 
     /**
@@ -260,5 +267,9 @@ public class AuthConfig {
                 return request;
             }
         };
+    }
+
+    public AuthCache getAuthCache() {
+        return authCache;
     }
 }

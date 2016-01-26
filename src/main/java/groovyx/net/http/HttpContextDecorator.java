@@ -21,6 +21,7 @@
  */
 package groovyx.net.http;
 
+import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 
@@ -37,14 +38,18 @@ import org.apache.http.protocol.HttpContext;
  */
 public class HttpContextDecorator implements HttpContext {
 
-    protected HttpContext delegate;
+    protected HttpClientContext delegate;
 
     public HttpContextDecorator() {
-        this.delegate = new BasicHttpContext();
+        this.delegate = new HttpClientContext();
     }
 
     public HttpContextDecorator( HttpContext delegate ) {
-        this.delegate = new BasicHttpContext(delegate);
+        this.delegate = new HttpClientContext(delegate);
+    }
+
+    public HttpClientContext getDelegate() {
+        return delegate;
     }
 
     /**
